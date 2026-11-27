@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Godot 4.7.2 and matching export templates
         shell: bash
@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p build package dist
+          mkdir -p build package
           "$GODOT_BIN" --headless --path . --export-release 'Windows Desktop' build/OpenRoad.exe
           test -s build/OpenRoad.exe
           cp build/OpenRoad.exe package/
@@ -97,10 +97,9 @@ jobs:
           cp docs/BENCHMARKING.md package/BENCHMARKING.md
           cp docs/ASSET_LICENSES.md package/ASSET_LICENSES.md
           cp GODOT_ENGINE_LICENSE.txt package/GODOT_ENGINE_LICENSE.txt
-          (cd package && zip -qr "$GITHUB_WORKSPACE/dist/OpenRoad-Windows-${GITHUB_RUN_NUMBER}.zip" .)
 
       - name: Upload Windows player for smoke test
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openroad-windows-player
           path: |
@@ -108,11 +107,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload Windows ZIP
-        uses: actions/upload-artifact@v4
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v7
         with:
           name: openroad-windows-${{ github.run_number }}
-          path: dist/OpenRoad-Windows-${{ github.run_number }}.zip
+          path: package/
           if-no-files-found: error
           retention-days: 14
 
@@ -122,7 +121,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Download Windows player
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: openroad-windows-player
           path: smoke-build
@@ -163,18 +162,22 @@ jobs:
       contents: write
     steps:
       - name: Check out release notes
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.ref }}
 
-      - name: Download tested Windows ZIP
-        uses: actions/download-artifact@v4
+      - name: Download tested Windows package
+        uses: actions/download-artifact@v8
         with:
           name: openroad-windows-${{ github.run_number }}
-          path: dist
+          path: package
 
-      - name: Publish GitHub Release
+      - name: Create release ZIP and publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
-        run: gh release create "$GITHUB_REF_NAME" "dist/OpenRoad-Windows-${RUN_NUMBER}.zip" --verify-tag --title "OPEN ROAD $GITHUB_REF_NAME" --notes-file docs/RELEASE_NOTES.md
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          (cd package && zip -qr "$GITHUB_WORKSPACE/dist/OpenRoad-Windows-${RUN_NUMBER}.zip" .)
+          gh release create "$GITHUB_REF_NAME" "dist/OpenRoad-Windows-${RUN_NUMBER}.zip" --verify-tag --title "OPEN ROAD $GITHUB_REF_NAME" --notes-file docs/RELEASE_NOTES.md

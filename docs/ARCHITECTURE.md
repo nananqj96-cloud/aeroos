@@ -1,6 +1,6 @@
 # OPEN ROAD architecture — Phase 0
 
-**Status:** small Godot prototype. The scene and systems below are source-level intent until the Godot CI import/test/export and Windows smoke job pass. The target-PC performance gate is separate and remains unmeasured.
+**Status:** Godot 4.7.2 prototype. GitHub Actions run [46068369120](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068369120) successfully imported the project, ran its checks, exported a Windows x64 executable, and smoke-launched it on Windows. The target-PC performance gate remains unmeasured.
 
 ## Engine and cost
 
@@ -30,16 +30,16 @@ Each mirror is 256×128. The mirror camera cull mask excludes the mirror display
 
 ## Tests and build pipeline
 
-`.github/workflows/godot-ci.yml` is intended to:
+`.github/workflows/godot-ci.yml`:
 
-1. Download Godot 4.7.2 and the matching official export templates.
-2. Import the project headlessly, run the project's math/scene checks, and run a startup smoke check.
-3. Export a standalone Windows x64 executable with embedded project data.
-4. Run that executable with `--headless -- --smoke` on a Windows runner and upload the verified executable.
-5. Publish a GitHub Release for `v*` tags only after the build and Windows smoke test succeed.
+1. Downloads Godot 4.7.2 and the matching official export templates.
+2. Imports the project headlessly, runs the project's math/scene checks, and runs a startup smoke check.
+3. Exports a standalone Windows x64 executable with embedded project data.
+4. Runs that executable with `--headless -- --smoke` on a Windows runner.
+5. Uploads the Windows package as a GitHub Actions artifact; `v*` tags publish a release ZIP only after both CI jobs pass.
 
-This CI requires no project-specific secret. A CI smoke test is not a visual review, real GPU performance measurement, or target-PC certification. See `docs/PHASE0_REPORT.md` for the actual latest run status.
+The first CI run passed both the Linux build/test/export job and the Windows executable startup check. The build needs no project-specific secret. CI smoke is not a visual review, real GPU performance measurement, or target-PC certification. See `docs/PHASE0_REPORT.md` for evidence and the artifact link.
 
 ## Planned boundaries after Phase 0
 
-If this prototype passes its initial checks, later work should separate bike dynamics, rider animation, traffic behavior, lens/camera, crash response, world streaming, audio, weather, settings, and UI into independently tested systems. Any later third-party asset needs a verified license and attribution before it is added. Keep the existing acceptance target visible: 40 average FPS and 30 FPS 1% low on the specified target PC, with a regression greater than 10% blocking further progression.
+If the prototype remains viable after target-PC measurement, later work should separate bike dynamics, rider animation, traffic behavior, lens/camera, crash response, world streaming, audio, weather, settings, and UI into independently tested systems. Any later third-party asset needs a verified license and attribution before it is added. Keep the existing acceptance target visible: 40 average FPS and 30 FPS 1% low on the specified target PC, with a regression greater than 10% blocking further progression.
