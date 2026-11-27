@@ -1,36 +1,17 @@
-# Unity generated files
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-UserSettings/
-MemoryCaptures/
-Recordings/
+# Godot generated editor/import/cache files
+.godot/
+.import/
 
-# Generated Phase 0 scene, settings, and materials (recreated by the Editor bootstrap)
-Assets/OpenRoad/Generated/
+# Local exports and CI artifacts
+build/
+dist/
+package/
+*.exe
+*.pck
+*.zip
 
 # IDE / OS
-.vs/
 .vscode/
 .idea/
-*.csproj
-*.sln
-*.suo
-*.user
-*.userprefs
-*.pidb
-*.booproj
-*.svclog
-*.pdb
 .DS_Store
 Thumbs.db
-
-# CI artifacts and local benchmark output
-artifacts/
-dist/
-OpenRoad-Windows-*.zip
-benchmark_*.csv
-benchmark_summary.*

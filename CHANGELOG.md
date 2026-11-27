@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased — Phase 0 spike
+## Unreleased — Godot Phase 0 prototype
 
-- Added a Unity 6.3 LTS / URP project baseline and generated Phase 0 scene setup.
-- Added a RenderGraph-backed URP horizontal fisheye pass and a low-resolution, half-rate mirror rig.
-- Added a fixed-route benchmark mode that writes per-frame CSV and summary metrics, including frame-time percentiles and memory readings where the runtime exposes them.
-- Added GameCI edit/play-mode test, Windows Mono build, Windows smoke-launch, artifact, and tag-release workflow.
-- Added architecture, performance-budget, benchmarking, and asset-license documentation.
-- **Not yet verified:** Unity compilation, GitHub Actions execution, a Windows player launch, GPU timings, target-PC FPS, or gameplay feel. The repository owner must add Unity CI secrets and run/paste the target-PC benchmark summary.
+- Replaced the Unity-only project and Unity-activation workflow with a Godot 4.7.2 project that does not require a Unity account, paid engine subscription, or activation secrets.
+- Added a procedural 1 km road, placeholder bike, 50 deterministically seeded traffic fixtures, chase/cockpit cameras, two mirror views, and a horizontal lens shader.
+- Added GDScript math and scene checks, headless startup smoke mode, frame-time CSV/report output, percentile-based low-FPS estimates, and a frame-time histogram.
+- Added a GitHub Actions pipeline intended to import/test the project, export a single-file Windows x64 executable, launch it on Windows in smoke mode, and publish tagged builds after verification.
+- Replaced Unity-specific setup and performance notes with Godot project, licensing, benchmark, and performance-budget documentation.
+- **Not yet verified by the Godot engine:** engine import, shader compilation, runtime tests, Windows export, Windows executable launch. Target-PC FPS and game acceptance remain unmeasured.

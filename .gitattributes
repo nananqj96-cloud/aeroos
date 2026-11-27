@@ -1,15 +1,14 @@
-# Unity source assets remain text where Unity serializes them as YAML.
-*.unity text eol=lf
-*.prefab text eol=lf
-*.asset text eol=lf
-*.meta text eol=lf
-*.asmdef text eol=lf
+# Keep Godot project and documentation files as readable UTF-8 text.
+*.gd text eol=lf
+*.gdshader text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.cfg text eol=lf
+*.md text eol=lf
 *.json text eol=lf
-*.cs text eol=lf
-*.shader text eol=lf
-*.hlsl text eol=lf
 
-# Binary source assets belong in Git LFS when added.
+# Large binary assets added later must use Git LFS.
 *.fbx filter=lfs diff=lfs merge=lfs -text
 *.obj filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
@@ -27,7 +26,3 @@
 *.aiff filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
-*.unitypackage filter=lfs diff=lfs merge=lfs -text
-*.zip filter=lfs diff=lfs merge=lfs -text
-*.exe filter=lfs diff=lfs merge=lfs -text
-*.dll filter=lfs diff=lfs merge=lfs -text

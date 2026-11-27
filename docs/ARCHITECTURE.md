@@ -1,49 +1,45 @@
-# OPEN ROAD architecture — Phase 0 baseline
+# OPEN ROAD architecture — Phase 0
 
-**Status:** architecture baseline and test spike only; systems described as future work are not implemented. Last reviewed 2026-11-27.
+**Status:** small Godot prototype. The scene and systems below are source-level intent until the Godot CI import/test/export and Windows smoke job pass. The target-PC performance gate is separate and remains unmeasured.
 
-## Engine choice
+## Engine and cost
 
-- **Unity 6.3 LTS `6000.3.29f1` + URP 17.3.0**, Windows x64, Direct3D 11 primary, Mono scripting backend.
-- Unity's release support page names 6.3 LTS as the current LTS and says it is supported through December 2027. The project's editor version is pinned in `ProjectSettings/ProjectVersion.txt`.
-- URP is selected for controlled render cost on the GTX 1050 2 GB. The Phase 0 project disables HDR/MSAA by default and uses the URP FSR 1 spatial upscaler at sub-native render scale. The fisheye pass is a custom `ScriptableRendererFeature` written against URP's RenderGraph path and runs after post-processing. HUD/debug UI is drawn after the camera image and is therefore not distorted.
-- Mono is deliberate for iteration and cross-build simplicity. An IL2CPP switch is a later release decision, not required to test the rendering spike.
-- Unity Personal is currently free to eligible customers with up to $200,000 in annual revenue and funding. The owner must verify account/project eligibility and the current Unity terms; no license secrets are stored in the repository.
+- **Godot 4.7.2**, standard (non-Mono) build, GDScript, Windows x64 export.
+- Renderer: **GL Compatibility**, chosen for broad older-GPU support. The Windows export uses the official matching Godot export template and embeds the project data in one executable.
+- Godot Engine is MIT-licensed. The project has no Unity dependency, Unity account, activation credential, paid engine plan, or paid content dependency. See `GODOT_ENGINE_LICENSE.txt` and `docs/ASSET_LICENSES.md`.
 
-## Rejected alternatives for this target
+## Scene and systems
 
-- **Unreal Engine 5:** Nanite, Lumen, and Virtual Shadow Maps are not appropriate assumptions for a GTX 1050 2 GB / DirectX 11 floor. Disabling them removes much of the headline advantage while increasing CI/build and project burden.
-- **Godot 4:** documented fallback if Unity licensing or CI activation blocks progress. Godot is light and permissively licensed, but has a less mature out-of-the-box path for vehicle/ragdoll authoring and large-world streaming.
-- **Bevy/Rust:** capable runtime performance, but weaker editor, animation-rigging, asset-pipeline, and shader iteration support for this project. The immediate bottleneck is not managed-language throughput.
-- **HDRP:** explicitly out of scope for the target GPU.
+`scenes/main.tscn` contains a full-window `Control` with the Phase 0 script. The script creates its test world at runtime:
 
-## Phase 0 project boundaries
+- A 1 km straight road, ground plane, simple roadside buildings, lamps, and dashed markings.
+- An unbranded procedural bike fixture and a kinematic W/S/A/D ride controller.
+- Exactly 50 deterministically seeded moving car fixtures. The body and canopy meshes are batched with `MultiMeshInstance3D`; this is not traffic AI.
+- One player camera with chase/cockpit positions.
+- Two low-resolution mirror `SubViewport`s sharing the world. Their cameras reflect the player camera across each mirror plane; the mirrors update on alternate frames and can be disabled.
+- A dedicated world viewport, drawn through a canvas-item shader that remaps horizontal image coordinates for the fisheye-style lens. The HUD is drawn above the processed image and is not warped.
+- A text HUD and an opt-in benchmark that records frame samples, frame-time percentiles, a histogram, and render-scale range.
 
-Current assemblies:
+The bike is explicitly a visual placeholder. This spike does not implement motorcycle physics, a rider, production art, or a finished game loop.
 
-- `OpenRoad.Core` — lens mapping helper and camera marker.
-- `OpenRoad.Rendering` — URP horizontal lens feature.
-- `OpenRoad.Spike` — deterministic traffic fixture, simple kinematic ride, mirror rig, benchmark UI/recorder, and smoke entry point.
-- `OpenRoad.Editor` — generates the spike scene/settings on editor load and provides the GameCI/local build entry point.
+## Rendering and frame budget
 
-When run in Unity, the generator is intended to create one 1,000 m road strip, one unbranded procedural bike fixture, exactly 50 pooled kinematic car meshes with a fixed seed, low-poly roadside geometry, a chase/cockpit camera, and two 256×128 mirror targets updated every other frame. The generator and runtime have not yet been compiled or run, so these are source-level targets, not verified scene behavior. The procedural bike is **test geometry only** and is not a production motorcycle asset. The traffic is not a traffic-AI system. The ride controller is not PhysX bike handling.
+The main camera renders to a `SubViewport`. Its texture is scaled to the window and sampled through `scripts/horizontal_fisheye.gdshader`; only horizontal UVs are warped. At the start of a benchmark, the program requests a 1920×1080 output and a 0.80 world-viewport scale. Every half-second, a simple frame-time rule adjusts that scale within 0.65–1.00. This controller is experimental; it has not been shown to meet the performance target on the owner's GPU.
 
-## Rendering and camera path
+Each mirror is 256×128. The mirror camera cull mask excludes the mirror display surfaces to prevent recursive mirror rendering. Disabling mirrors stops mirror updates. No claim is made about exact GPU memory allocation or actual mirror cost until measured on the target computer.
 
-1. Main scene camera renders a wide rectilinear image (vertical FOV 84°).
-2. URP FSR 1 is enabled for sub-native scene rendering and scaling back to output.
-3. The horizontal-only remap samples the scene using an equidistant-style horizontal angle curve; vertical UV is kept linear. `edgeCoverage` crops source coverage slightly so the remap does not sample outside the source image.
-4. The pass executes after post-processing only for the explicitly marked primary camera. Mirror cameras do not recurse through the lens effect. HUD remains undistorted.
-5. The mirror rig reflects the eye-camera pose across each mirror plane, renders only into small targets, and updates at half the primary-camera rate. Turning mirrors off releases the targets and stops manual camera renders.
+## Tests and build pipeline
 
-This is Tier A only. There is no stitched multi-camera Tier B mode, motion blur, mirror calibration UI, temporal anti-aliasing, or runtime FSR/dynamic-resolution quality menu yet. The benchmark has an experimental bounded dynamic-resolution controller; owner GPU testing is required to confirm that the selected Unity/driver combination actually scales and upscales as expected.
+`.github/workflows/godot-ci.yml` is intended to:
 
-## Data and future system boundaries
+1. Download Godot 4.7.2 and the matching official export templates.
+2. Import the project headlessly, run the project's math/scene checks, and run a startup smoke check.
+3. Export a standalone Windows x64 executable with embedded project data.
+4. Run that executable with `--headless -- --smoke` on a Windows runner and upload the verified executable.
+5. Publish a GitHub Release for `v*` tags only after the build and Windows smoke test succeed.
 
-The next implementation should split into Vehicle, Rider, Camera/Lens, Crash, Traffic, World/Streaming, Weather, Audio, UI, Settings, and Core assemblies. Bike physics must use a single chassis body with custom ray/sphere wheel contacts and a fixed-step substepped single-track model; do not substitute `WheelCollider`. Traffic data should be isolated from presentation and updated from pooled data-oriented state. Settings should be versioned JSON under `Application.persistentDataPath`.
+This CI requires no project-specific secret. A CI smoke test is not a visual review, real GPU performance measurement, or target-PC certification. See `docs/PHASE0_REPORT.md` for the actual latest run status.
 
-## CI and release path
+## Planned boundaries after Phase 0
 
-GitHub Actions uses GameCI to run Unity EditMode/PlayMode tests and build `StandaloneWindows64` with Mono. A Windows runner smoke-launches the generated executable with `-smoke`; the build is then zipped with the README, benchmark instructions, and license ledger. A `v*` tag creates a GitHub Release. The `.exe` is unsigned and may trigger Windows SmartScreen; no code-signing claim is made.
-
-Unity Personal CI needs `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` repository Actions secrets. These are owner-managed and must never be committed or sent in chat. CI can validate compilation/tests/player startup; it cannot measure GTX 1050 performance or riding feel.
+If this prototype passes its initial checks, later work should separate bike dynamics, rider animation, traffic behavior, lens/camera, crash response, world streaming, audio, weather, settings, and UI into independently tested systems. Any later third-party asset needs a verified license and attribution before it is added. Keep the existing acceptance target visible: 40 average FPS and 30 FPS 1% low on the specified target PC, with a regression greater than 10% blocking further progression.

@@ -2,28 +2,36 @@
 
 ## Run it on the target PC
 
-1. Download/unzip the Windows x64 build produced by GitHub Actions (or build locally from Unity 6000.3.29f1).
-2. Close GPU-heavy applications. Use the owner's GTX 1050 2 GB / Ryzen 3 1300X / 16 GB PC, 1920×1080 output, current NVIDIA driver, and the default Low spike workload. Do not run through a remote desktop session if it changes GPU selection.
-3. Start `OpenRoad.exe` and click **Run Benchmark**, or launch from Explorer's address bar / a shortcut with:
+1. Download and unzip the `OpenRoad.exe` artifact from a successful **Godot CI and Windows build** run. The executable is a single file with the project data embedded.
+2. Use the actual target PC: GTX 1050 2 GB, Ryzen 3 1300X, 16 GB RAM, Windows x64, 1920×1080. Close GPU-heavy applications. Avoid remote desktop if it changes GPU selection.
+3. From a command prompt, run:
 
    ```text
-   OpenRoad.exe -benchmark -benchmark-seconds 40
+   OpenRoad.exe -- --benchmark --benchmark-seconds 40
    ```
 
-4. Let the 5-second warm-up finish. Avoid alt-tabbing during the measured interval. Default route: 40 seconds, 80 km/h, seed `20261127`, clear weather, 50 traffic vehicles, lens enabled, mirrors enabled, 1920×1080 output. The render scale starts at 0.80 and the experimental controller adjusts from 0.65 to 1.00.
-5. The app writes a per-frame `benchmark_*.csv` and `benchmark_summary.txt` in the displayed `Application.persistentDataPath/Benchmark/` directory. On Windows this is generally under `%USERPROFILE%\AppData\LocalLow\<Company>\OpenRoad\Benchmark\`.
-6. Paste the complete text summary here. Include the GPU/CPU lines and whether the run used mirrors/lens. Do not report a pass without the target-PC output.
+   You can also press **F2** in-game; that run returns to the game rather than automatically exiting. The CLI run exits after saving its report.
+4. The benchmark warms up for 5 seconds and measures for 40 seconds. It requests a 1920×1080 window, fixes speed at 80 km/h, uses seed `20261127`, enables 50 traffic fixtures, mirrors, and the horizontal lens effect, and starts at 0.80 render scale. The experimental controller adjusts scale between 0.65 and 1.00.
+5. When the run finishes, find `benchmark_*.csv` and `benchmark_summary.txt` under the Godot user-data folder's `Benchmark` directory. The full CSV path is printed in the summary and to the console.
+6. Share the complete summary along with confirmation that the run was on the target PC. Do not call CI performance numbers a target-PC pass.
 
-The same benchmark is available from the in-game button; **F2** starts it. `-benchmark-seconds N` accepts 10–180 seconds. A 40-second default run remains inside the 1 km route at the fixed 80 km/h speed; longer runs wrap the fixture route and are less representative of streaming.
+The default run advances about 889 m at 80 km/h during the 40 measured seconds, within the 1 km fixture road. If you change duration, the measured road traversal is no longer directly comparable.
 
-## Contents of the report
+## What is measured
 
-- Average FPS, p99/p99.9 frame time converted to 1%/0.1% low FPS, and a frame-time histogram.
-- CPU frame and main-thread time plus GPU frame time from Unity `FrameTimingManager`, if the driver/player reports them.
-- Peak draw calls from `ProfilerRecorder` if the named Unity counter is available; otherwise the report says `unavailable`.
-- GPU driver allocation (where exposed), adapter VRAM capacity, process working set, traffic count, mirror/lens status, and dynamic-resolution scale range.
-- The 40 FPS / 30 FPS 1% low threshold result for this run. It is not a cross-machine or final-game certification.
+- Per-frame `_process` delta in milliseconds and its reciprocal FPS estimate.
+- Average FPS and average frame time.
+- Nearest-rank p99 and p99.9 frame times, converted to 1% and 0.1% low FPS.
+- Frame-time histogram counts in seven buckets: `<8.33`, `<12.5`, `<16.67`, `<22`, `<33.33`, `<50`, and `>=50` milliseconds.
+- Minimum, average, and maximum dynamic render scale.
+- Workload metadata: engine version, traffic seed/count, requested output resolution, lens/mirror state, run duration, and CSV path.
 
-## Smoke test vs performance test
+This Phase 0 build does **not** report CPU/GPU frame-time breakdown, VRAM usage, draw calls, or power. The FPS values are application frame-loop measurements and are not a hardware-independent profiler result.
 
-CI runs the Windows player with `-smoke -batchmode -nographics`. That confirms that the packaged player starts, its Phase 0 scene initializes, the 50-vehicle pool exists, and the camera/mirror systems are present. Because this has no representative GPU and no visible display, it is **not** a performance or visual-quality test. A successful smoke test does not substitute for the owner benchmark.
+## Decision rule
+
+The carried-forward target-PC gate is **at least 40 average FPS and at least 30 FPS 1% low** with the default workload. A `PASS for this run` line only describes one run; it does not certify other computers or the completed game. Compare runs with the same driver, output resolution, mirror/lens settings, and workload. A greater than 10% regression against a comparable accepted result blocks progression until it is understood and fixed.
+
+## Smoke test versus performance test
+
+CI starts the exported Windows executable in headless smoke mode. This checks that the packaged executable can start, create the Phase 0 world objects, and exit successfully. It does not measure graphical rendering, show a visual window, test riding feel, or certify performance. The target-PC benchmark is still required.

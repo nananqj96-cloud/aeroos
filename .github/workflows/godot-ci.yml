@@ -1,0 +1,180 @@
+name: Godot CI and Windows build
+
+on:
+  push:
+    branches: [main, 'arena/**']
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  godot-build:
+    name: Import, test, and export Windows x64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 and matching export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          version='4.7.2-stable'
+          download_dir="$RUNNER_TEMP/godot-download"
+          template_dir="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$download_dir" "$template_dir"
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://github.com/godotengine/godot/releases/download/${version}/Godot_v${version}_linux.x86_64.zip" \
+            --output "$download_dir/godot-linux.zip"
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://github.com/godotengine/godot/releases/download/${version}/Godot_v${version}_export_templates.tpz" \
+            --output "$download_dir/export-templates.tpz"
+          mkdir -p "$download_dir/editor" "$download_dir/templates"
+          unzip -q "$download_dir/godot-linux.zip" -d "$download_dir/editor"
+          unzip -q "$download_dir/export-templates.tpz" -d "$download_dir/templates"
+          godot_bin="$(find "$download_dir/editor" -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' -print -quit)"
+          if [[ -z "$godot_bin" ]]; then
+            echo 'Godot editor binary was not found in the downloaded archive.' >&2
+            exit 1
+          fi
+          chmod +x "$godot_bin"
+          if [[ -d "$download_dir/templates/templates" ]]; then
+            cp -a "$download_dir/templates/templates/." "$template_dir/"
+          else
+            cp -a "$download_dir/templates/." "$template_dir/"
+          fi
+          if [[ ! -f "$template_dir/windows_release_x86_64.exe" ]]; then
+            echo 'Matching Windows x86_64 export template is missing.' >&2
+            find "$template_dir" -maxdepth 1 -type f -printf '%f\n' | sort | head -50
+            exit 1
+          fi
+          echo "GODOT_BIN=$godot_bin" >> "$GITHUB_ENV"
+          "$godot_bin" --version
+
+      - name: Import project and check scripts
+        shell: bash
+        run: |
+          set -o pipefail
+          "$GODOT_BIN" --headless --editor --path . --quit 2>&1 | tee "$RUNNER_TEMP/godot-import.log"
+
+      - name: Run project tests
+        shell: bash
+        run: |
+          set +e
+          "$GODOT_BIN" --headless --path . -- --test 2>&1 | tee "$RUNNER_TEMP/godot-test.log"
+          result=${PIPESTATUS[0]}
+          if [[ $result -ne 0 ]] || ! grep -q 'OPENROAD_TESTS_OK' "$RUNNER_TEMP/godot-test.log"; then
+            echo '::error title=Godot tests failed::See Godot test output above; no Windows export was produced.'
+            grep -Ei 'ERROR|SCRIPT ERROR|Parse Error|OPENROAD_TEST_FAIL' "$RUNNER_TEMP/godot-test.log" | tail -40 | while IFS= read -r line; do echo "::error::$line"; done || true
+            exit 1
+          fi
+
+      - name: Run startup smoke check
+        shell: bash
+        run: |
+          set +e
+          "$GODOT_BIN" --headless --path . -- --smoke 2>&1 | tee "$RUNNER_TEMP/godot-smoke.log"
+          result=${PIPESTATUS[0]}
+          if [[ $result -ne 0 ]] || ! grep -q 'OPENROAD_SMOKE_OK' "$RUNNER_TEMP/godot-smoke.log"; then
+            echo '::error title=Godot smoke test failed::The Phase 0 scene did not pass startup checks.'
+            grep -Ei 'ERROR|SCRIPT ERROR|Parse Error|OPENROAD_SMOKE_FAIL' "$RUNNER_TEMP/godot-smoke.log" | tail -40 | while IFS= read -r line; do echo "::error::$line"; done || true
+            exit 1
+          fi
+
+      - name: Export Windows x64
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build package dist
+          "$GODOT_BIN" --headless --path . --export-release 'Windows Desktop' build/OpenRoad.exe
+          test -s build/OpenRoad.exe
+          cp build/OpenRoad.exe package/
+          cp README.md package/README.md
+          cp docs/BENCHMARKING.md package/BENCHMARKING.md
+          cp docs/ASSET_LICENSES.md package/ASSET_LICENSES.md
+          cp GODOT_ENGINE_LICENSE.txt package/GODOT_ENGINE_LICENSE.txt
+          (cd package && zip -qr "$GITHUB_WORKSPACE/dist/OpenRoad-Windows-${GITHUB_RUN_NUMBER}.zip" .)
+
+      - name: Upload Windows player for smoke test
+        uses: actions/upload-artifact@v4
+        with:
+          name: openroad-windows-player
+          path: |
+            build/OpenRoad.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Windows ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: openroad-windows-${{ github.run_number }}
+          path: dist/OpenRoad-Windows-${{ github.run_number }}.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  windows-smoke-test:
+    name: Launch exported Windows player
+    needs: godot-build
+    runs-on: windows-latest
+    steps:
+      - name: Download Windows player
+        uses: actions/download-artifact@v4
+        with:
+          name: openroad-windows-player
+          path: smoke-build
+
+      - name: Run headless player smoke check
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'smoke-build/OpenRoad.exe'
+          if (-not (Test-Path $exe)) {
+            Get-ChildItem -Recurse smoke-build
+            throw 'OpenRoad.exe is missing.'
+          }
+          $stdout = Join-Path $PWD 'smoke.stdout.log'
+          $stderr = Join-Path $PWD 'smoke.stderr.log'
+          $process = Start-Process -FilePath $exe -ArgumentList @('--headless', '--', '--smoke') -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          if (-not $process.WaitForExit(120000)) {
+            Stop-Process -Id $process.Id -Force
+            throw 'Windows smoke player did not exit within 120 seconds.'
+          }
+          if ($process.ExitCode -ne 0) {
+            if (Test-Path $stdout) { Get-Content $stdout -Tail 100 }
+            if (Test-Path $stderr) { Get-Content $stderr -Tail 100 }
+            throw "Windows smoke player exited with code $($process.ExitCode)."
+          }
+          if (-not (Test-Path $stdout) -or -not (Select-String -Path $stdout -Pattern 'OPENROAD_SMOKE_OK' -Quiet)) {
+            if (Test-Path $stdout) { Get-Content $stdout -Tail 100 }
+            if (Test-Path $stderr) { Get-Content $stderr -Tail 100 }
+            throw 'Windows smoke success marker was not written.'
+          }
+          Get-Content $stdout -Tail 50
+
+  github-release:
+    name: Publish verified Windows release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [godot-build, windows-smoke-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out release notes
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download tested Windows ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: openroad-windows-${{ github.run_number }}
+          path: dist
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: gh release create "$GITHUB_REF_NAME" "dist/OpenRoad-Windows-${RUN_NUMBER}.zip" --verify-tag --title "OPEN ROAD $GITHUB_REF_NAME" --notes-file docs/RELEASE_NOTES.md
