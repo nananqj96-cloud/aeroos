@@ -1,0 +1,17 @@
+# Godot generated editor/import/cache files
+.godot/
+.import/
+
+# Local exports and CI artifacts
+build/
+dist/
+package/
+*.exe
+*.pck
+*.zip
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
