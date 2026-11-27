@@ -31,6 +31,24 @@ jobs:
           restore-keys: |
             Library-Unity-6000.3.29f1-
 
+      - name: Verify Unity activation secrets are present
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -n "$UNITY_LICENSE" ]] || missing+=(UNITY_LICENSE)
+          [[ -n "$UNITY_EMAIL" ]] || missing+=(UNITY_EMAIL)
+          [[ -n "$UNITY_PASSWORD" ]] || missing+=(UNITY_PASSWORD)
+          if ((${#missing[@]} > 0)); then
+            printf 'Missing required repository Actions secret(s): %s' "${missing[*]}" >&2
+            echo >&2
+            exit 1
+          fi
+          echo "Unity activation secrets are present; values were not logged."
+
       - name: Run Unity tests
         uses: game-ci/unity-test-runner@v4.4.0
         env:
