@@ -5,7 +5,7 @@
 
 ## Verified in CI
 
-The Godot workflow run [46068369120](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068369120) completed successfully on commit `2fa5e00`. A second run for the pull request, [46068374802](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068374802), also passed.
+The direct-package build run, [46068747923](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068747923), completed successfully on commit `ba6ded9`. Its pull-request check, [46068754619](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068754619), also passed. The earlier run [46068369120](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068369120) passed the same project import, test, export, and Windows smoke stages.
 
 - Godot 4.7.2 and matching export templates installed on the Linux runner.
 - Headless Godot editor import completed.
@@ -13,8 +13,9 @@ The Godot workflow run [46068369120](https://github.com/nananqj96-cloud/aeroos/a
 - Startup smoke mode passed.
 - Windows x64 single-file executable exported and uploaded.
 - The exported Windows executable launched on a Windows runner with `--headless -- --smoke`, exited successfully, and passed the smoke-success check.
+- The CI workflow now uploads the Windows package contents directly as an artifact, so one unzip gives you `OpenRoad.exe` and its documents.
 
-The full Windows package from the first successful run is available as [Actions artifact `openroad-windows-1`](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068369120/artifacts/15232126166). A player-only artifact is also available as [Actions artifact `openroad-windows-player`](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068369120/artifacts/15231966428). GitHub Actions artifacts are temporary (14-day retention); use the newest successful workflow run for later builds. No tagged GitHub Release was created.
+Download the verified [Windows package artifact `openroad-windows-3`](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068747923/artifacts/15231294423), or the [player-only artifact](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068747923/artifacts/15232445123). Artifacts are temporary (14-day retention); use the newest successful workflow run for later builds. No tagged GitHub Release was created.
 
 Local static checks also passed: `gdparse`, `gdformat --check`, `gdlint`, workflow YAML parsing, and `git diff --check`.
 

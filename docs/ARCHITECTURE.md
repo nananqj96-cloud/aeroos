@@ -1,6 +1,6 @@
 # OPEN ROAD architecture — Phase 0
 
-**Status:** Godot 4.7.2 prototype. GitHub Actions run [46068369120](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068369120) successfully imported the project, ran its checks, exported a Windows x64 executable, and smoke-launched it on Windows. The target-PC performance gate remains unmeasured.
+**Status:** Godot 4.7.2 prototype. GitHub Actions run [46068747923](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068747923) successfully imported the project, ran its checks, exported a Windows x64 executable, and smoke-launched it on Windows. The target-PC performance gate remains unmeasured.
 
 ## Engine and cost
 

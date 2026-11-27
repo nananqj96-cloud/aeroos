@@ -33,11 +33,11 @@ For the local editor, install the matching Godot 4.7.2 export templates using th
 
 ## Get the Windows executable
 
-1. Open the repository's **Actions** tab and select the latest successful **Godot CI and Windows build** run for the branch you want.
-2. Download the `openroad-windows-<run number>` artifact. It contains `OpenRoad.exe` plus the readme, benchmark guide, attribution notes, and Godot Engine license notice.
-3. Unzip it and run `OpenRoad.exe`. The executable is unsigned and Windows may show a SmartScreen warning.
+1. A verified package is available as [Actions artifact `openroad-windows-3`](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068747923/artifacts/15231294423). For newer builds, open the repository's **Actions** tab and choose the latest successful **Godot CI and Windows build** run.
+2. Download the artifact and unzip it once. It contains `OpenRoad.exe` plus the readme, benchmark guide, attribution notes, and Godot Engine license notice. A [player-only artifact](https://github.com/nananqj96-cloud/aeroos/actions/runs/46068747923/artifacts/15232445123) is also available.
+3. Run `OpenRoad.exe`. The executable is unsigned and Windows may show a SmartScreen warning.
 
-A version tag such as `v0.1.0` creates a GitHub Release only after both the Linux build/tests and Windows smoke test pass. Do not use a failed or in-progress run as a build.
+Artifacts are retained for 14 days. A version tag such as `v0.1.0` creates a GitHub Release only after both the Linux build/tests and Windows smoke test pass. Do not use a failed or in-progress run as a build.
 
 ## Benchmark on the target PC
 
