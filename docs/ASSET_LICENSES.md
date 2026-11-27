@@ -1,0 +1,16 @@
+# Asset and license ledger
+
+Checked: **2026-11-27**. The Phase 0 source is designed without external art, sound, map, rider, or motorcycle assets; no scene or build has been generated yet. Procedural geometry and the fisheye shader are original project work. Candidate rows below are not included in the build.
+
+| Name | URL | Author / source | License | Date checked | Modifications / status | Attribution text |
+| --- | --- | --- | --- | --- | --- | --- |
+| Phase 0 procedural road, traffic cars, bike fixture, roadside props, and UI text | Original project source in this repository | OPEN ROAD project | Original work | 2026-11-27 | Generated from project scripts; unbranded, disposable performance fixtures. Not production art. | No third-party attribution required. |
+| Phase 0 horizontal lens shader and benchmark code | Original project source in this repository | OPEN ROAD project | Original work | 2026-11-27 | Authored for this repository; uses Unity URP APIs. | No third-party asset attribution required. |
+| Unity 6.3 LTS Editor / Unity runtime | [Unity plans](https://unity.com/products/pricing-updates) | Unity Technologies | Unity Editor/runtime terms; Personal is free for eligible customers up to $200,000 annual revenue and funding. Confirm eligibility/terms before distribution. | 2026-11-27 | Engine dependency, not a separately imported content asset. Unsigned Windows build only; no code-signing claim. | OPEN ROAD is made with Unity. |
+| Universal Render Pipeline (URP) 17.3.0 | [Unity Graphics repository license](https://github.com/Unity-Technologies/Graphics/blob/master/LICENSE.md) | Unity Technologies | Unity Companion License for Unity-dependent projects | 2026-11-27 | Package dependency; no Unity sample art or third-party package content is bundled by this repository. | URP package by Unity Technologies, used under the Unity Companion License. |
+| Unity Test Framework 1.5.1 | [Unity Test Framework package license](https://docs.unity3d.com/Packages/com.unity.test-framework@1.5/license/LICENSE.html) | Unity Technologies | Unity Companion License for Unity-dependent projects | 2026-11-27 | Editor/CI tests only; not game content. | Not applicable to game credits; dependency recorded for audit. |
+| Kawasaki Ninja H2 [free] — candidate only, not imported | [Sketchfab model page](https://sketchfab.com/3d-models/kawasaki-ninja-h2-free-0ab38d6e39664b25bfaf9f5c3e0c767c) | Anshuman dutta (@Anshuman_Dutta) | CC BY 4.0, per page | 2026-11-27 | Reviewed, **not downloaded or included**. Page reports 226.8k triangles and “Generated with AI”; topology, separable controls/wheels, scale, and materials have not been inspected. Not accepted for milestone 2 yet. | If later included and accepted: “Kawasaki Ninja H2 [free]” by Anshuman dutta, CC BY 4.0, via Sketchfab: https://sketchfab.com/3d-models/kawasaki-ninja-h2-free-0ab38d6e39664b25bfaf9f5c3e0c767c. |
+
+## Credits screen policy
+
+A shipped Credits screen must be generated from this ledger once external game assets are accepted. Phase 0 currently has no game-content attribution to show beyond the original project work and engine/package notices. The candidate Sketchfab row must not appear as an in-game credit until the asset is actually imported and accepted.
